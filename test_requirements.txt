@@ -1,4 +1,4 @@
+cmdline
 HTTPretty
 pytest
-pytest-git
 tox
