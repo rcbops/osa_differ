@@ -1,9 +1,12 @@
 """Testing osa-differ."""
 import argparse
+import json
+
+
 from git import Repo
 import httpretty
-import json
 from osa_differ import osa_differ
+from pytest import raises
 
 
 class TestOSADiffer(object):
@@ -11,7 +14,7 @@ class TestOSADiffer(object):
 
     def test_arguments_not_enough(self, capsys):
         """Verify that we get an error with missing args."""
-        with pytest.raises(SystemExit):
+        with raises(SystemExit):
             parser = osa_differ.create_parser()
             parser.parse_args([])
         out, err = capsys.readouterr()
