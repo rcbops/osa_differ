@@ -227,9 +227,8 @@ novncproxy_git_project_group: nova_console
         repo.index.commit('Testing')
 
         p = tmpdir.mkdir("test2")
-        repo_path = p / "test"
-        path_clonefrom = str(repo_path)
-        result = osa_differ.update_repo(path, path_clonefrom)
+        path_clonefrom = "{0}/testrepodoesntexist".format(str(p))
+        result = osa_differ.update_repo(path_clonefrom, path)
 
         assert result.active_branch.name == 'master'
         assert not result.is_dirty()
