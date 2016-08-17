@@ -7,7 +7,8 @@ osa-differ
     :target: https://pypi.python.org/pypi/osa_differ
 .. image:: https://travis-ci.org/major/osa_differ.svg?branch=master
     :target: https://travis-ci.org/major/osa_differ
-.. image:: https://img.shields.io/codecov/c/github/major/osa_differ.svg
+.. image:: https://img.shields.io/codecov/c/github/major/osa_differ/master.svg
+    :target: https://codecov.io/gh/major/osa_differ
 
 Find changes between OpenStack-Ansible releases.
 
