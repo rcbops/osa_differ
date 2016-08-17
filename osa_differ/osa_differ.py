@@ -197,6 +197,15 @@ def post_gist(report_data, old_sha, new_sha):
     return response['html_url']
 
 
+def prepare_storage_dir(storage_directory):
+    """Prepare the storage directory."""
+    storage_directory = os.path.expanduser(storage_directory)
+    if not os.path.exists(storage_directory):
+        os.mkdir(storage_directory)
+
+    return storage_directory
+
+
 def render_template(template_file, template_vars):
     """Render a jinja template."""
     # Load our Jinja templates
@@ -263,16 +272,12 @@ def run_osa_differ():
     logger = get_logger(args.debug)
 
     # Create the storage directory if it doesn't exist already.
-    storage_directory = os.path.expanduser(args.directory)
-    if not os.path.exists(storage_directory):
-        try:
-            logger.info("Creating storage directory "
-                        "{0}".format(storage_directory))
-            os.mkdir(storage_directory)
-        except OSError:
-            print("ERROR: Couldn't create the storage directory {0}. "
-                  "Please create it manually.".format(storage_directory))
-            sys.exit(1)
+    try:
+        storage_directory = prepare_storage_dir(args.storage_directory)
+    except OSError:
+        print("ERROR: Couldn't create the storage directory {0}. "
+              "Please create it manually.".format(args.storage_directory))
+        sys.exit(1)
 
     osa_repo_url = "https://git.openstack.org/openstack/openstack-ansible"
     osa_repo_dir = "{0}/openstack-ansible".format(storage_directory)

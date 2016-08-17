@@ -192,6 +192,29 @@ novncproxy_git_project_group: nova_console
         result = osa_differ.valid_commit(path, 'HEAD~1')
         assert not result
 
+    def test_prepare_storage_directory_exists(self, tmpdir):
+        """Verify that we can create a storage directory."""
+        p = tmpdir.mkdir("test")
+        storagedir = osa_differ.prepare_storage_dir(str(p))
+        assert storagedir == p
+
+    def test_prepare_storage_directory_create(self, tmpdir):
+        """Verify that we can create a storage directory."""
+        p = tmpdir.mkdir("test")
+        newdir = "{0}/subdir".format(str(p))
+        storagedir = osa_differ.prepare_storage_dir(newdir)
+        assert storagedir == newdir
+
+    def test_prepare_storage_directory_exception(self, tmpdir):
+        """Verify that we can create a storage directory."""
+        p = tmpdir.mkdir("test")
+        newdir = "{0}/subdir/subdir/subdir".format(str(p))
+
+        with raises(OSError) as excinfo:
+            osa_differ.prepare_storage_dir(newdir)
+
+        assert "No such file or directory" in excinfo.value
+
     def test_render_template(self, tmpdir):
         """Verify that we can render a jinja template."""
         p = tmpdir.mkdir('test')
