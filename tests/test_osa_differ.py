@@ -63,7 +63,7 @@ class TestOSADiffer(object):
         repo = Repo.init(path)
         for x in range(0, 10):
             file = p / "test{0}.txt".format(x)
-            file.write_text("Test", encoding='ascii')
+            file.write_text(u"Test", encoding='utf-8')
             repo.index.add(['test{0}.txt'.format(x)])
             repo.index.commit("Commit #{0}".format(x))
 
@@ -77,7 +77,7 @@ class TestOSADiffer(object):
         repo = Repo.init(path)
         for x in range(0, 10):
             file = p / "test{0}.txt".format(x)
-            file.write_text("Test", encoding='ascii')
+            file.write_text(u"Test", encoding='utf-8')
             repo.index.add(['test{0}.txt'.format(x)])
             repo.index.commit("Merge #{0}".format(x))
 
@@ -92,7 +92,7 @@ class TestOSADiffer(object):
         repo = Repo.init(path)
         for x in range(0, 10):
             file = p / "test{0}.txt".format(x)
-            file.write_text("Test", encoding='ascii')
+            file.write_text(u"Test", encoding='utf-8')
             repo.index.add(['test{0}.txt'.format(x)])
             repo.index.commit("Merge #{0}".format(x))
 
@@ -106,17 +106,17 @@ class TestOSADiffer(object):
         path = str(p)
         repo = Repo.init(path)
         file = p / 'test1.yml'
-        file.write_text("""---
+        file.write_text(u"""---
 tempest_git_repo: https://git.openstack.org/openstack/tempest
 tempest_git_install_branch: 1493c7f0ba49bfccb9ff8516b10a65d949d7462e
 tempest_git_project_group: utility_all
-""", encoding='ascii')
+""", encoding='utf-8')
         file = p / 'test2.yml'
-        file.write_text("""---
+        file.write_text(u"""---
 novncproxy_git_repo: https://github.com/kanaka/novnc
 novncproxy_git_install_branch: da82b3426c27bf1a79f671c5825d68ab8c0c5d9f
 novncproxy_git_project_group: nova_console
-""", encoding='ascii')
+""", encoding='utf-8')
         repo.index.add(['test1.yml', 'test2.yml'])
         repo.index.commit("Test")
         projects = osa_differ.get_projects(path,
@@ -130,11 +130,11 @@ novncproxy_git_project_group: nova_console
         path = str(p)
         repo = Repo.init(path)
         file = p / 'ansible-role-requirements.yml'
-        file.write_text("""
+        file.write_text(u"""
 - name: apt_package_pinning
   scm: git
   version: master
-""", encoding='ascii')
+""", encoding='utf-8')
         repo.index.add(['ansible-role-requirements.yml'])
         repo.index.commit("Test")
 
@@ -170,7 +170,7 @@ novncproxy_git_project_group: nova_console
         path = str(p)
         repo = Repo.init(path)
         file = p / 'test.txt'
-        file.write_text('Testing', encoding='ascii')
+        file.write_text(u'Testing', encoding='utf-8')
         repo.index.add(['test.txt'])
         repo.index.commit('Testing')
 
@@ -183,7 +183,7 @@ novncproxy_git_project_group: nova_console
         path = str(p)
         repo = Repo.init(path)
         file = p / 'test.txt'
-        file.write_text('Testing', encoding='ascii')
+        file.write_text(u'Testing', encoding='utf-8')
         repo.index.add(['test.txt'])
         repo.index.commit('Testing')
 
@@ -196,7 +196,7 @@ novncproxy_git_project_group: nova_console
         path = str(p)
         repo = Repo.init(path)
         file = p / 'test.txt'
-        file.write_text('Testing', encoding='ascii')
+        file.write_text(u'Testing', encoding='utf-8')
         repo.index.add(['test.txt'])
         repo.index.commit('Testing')
 
@@ -220,7 +220,7 @@ novncproxy_git_project_group: nova_console
         path = str(p)
         repo = Repo.init(path)
         file = p / 'test.txt'
-        file.write_text('Testing', encoding='ascii')
+        file.write_text(u'Testing', encoding='utf-8')
         repo.index.add(['test.txt'])
         repo.index.commit('Testing')
 
@@ -238,7 +238,7 @@ novncproxy_git_project_group: nova_console
         path = str(p)
         repo = Repo.init(path)
         file = p / 'test.txt'
-        file.write_text('Testing', encoding='ascii')
+        file.write_text(u'Testing', encoding='utf-8')
         repo.index.add(['test.txt'])
         repo.index.commit('Testing')
 
@@ -253,7 +253,7 @@ novncproxy_git_project_group: nova_console
         path = str(p)
         repo = Repo.init(path)
         file = p / 'test.txt'
-        file.write_text('Testing', encoding='ascii')
+        file.write_text(u'Testing', encoding='utf-8')
         repo.index.add(['test.txt'])
         repo.index.commit('Testing')
 
@@ -269,7 +269,7 @@ novncproxy_git_project_group: nova_console
         path = str(p)
         repo = Repo.init(path)
         file = p / 'test.txt'
-        file.write_text('Testing', encoding='ascii')
+        file.write_text(u'Testing', encoding='utf-8')
         repo.index.add(['test.txt'])
         repo.index.commit('Testing')
         repo.create_remote('origin', url='http://example.com')
