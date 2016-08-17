@@ -1,6 +1,14 @@
 osa-differ
 ==========
 
+.. image:: https://img.shields.io/pypi/v/osa_differ.svg
+    :target: https://pypi.python.org/pypi/osa_differ
+.. image:: https://img.shields.io/pypi/pyversions/osa_differ.svg
+    :target: https://pypi.python.org/pypi/osa_differ
+.. image:: https://travis-ci.org/major/osa_differ.svg?branch=master
+    :target: https://travis-ci.org/major/osa_differ
+.. image:: https://img.shields.io/codecov/c/github/codecov/example-python.svg
+
 Find changes between OpenStack-Ansible releases.
 
 Licensed under Apache 2.0.
