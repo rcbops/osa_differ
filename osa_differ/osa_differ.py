@@ -197,6 +197,21 @@ def post_gist(report_data, old_sha, new_sha):
     return response['html_url']
 
 
+def render_template(template_file, template_vars):
+    """Render a jinja template."""
+    # Load our Jinja templates
+    template_dir = "{0}/templates".format(
+        os.path.dirname(os.path.abspath(__file__))
+    )
+    jinja_env = jinja2.Environment(
+        loader=jinja2.FileSystemLoader(template_dir),
+        trim_blocks=True
+    )
+    rendered = jinja_env.get_template(template_file).render(template_vars)
+
+    return rendered
+
+
 def repo_clone(repo_dir, repo_url):
     """Clone repository to this host."""
     repo = Repo.clone_from(repo_url, repo_dir)
@@ -243,15 +258,6 @@ def run_osa_differ():
     """The script starts here."""
     # Get our arguments from the command line
     args = parse_arguments()
-
-    # Load our Jinja templates
-    template_dir = "{0}/templates".format(
-        os.path.dirname(os.path.abspath(__file__))
-    )
-    jinja_env = jinja2.Environment(
-        loader=jinja2.FileSystemLoader(template_dir),
-        trim_blocks=True
-    )
 
     # Configure logging
     logger = get_logger(args.debug)
@@ -302,14 +308,15 @@ def run_osa_differ():
             osa_old_commit, osa_new_commit = osa_new_commit, osa_old_commit
 
     # Start off our report with a header and our OpenStack-Ansible commits.
-    report = jinja_env.get_template('offline-header.j2').render(
-        args=args,
-        repo='openstack-ansible',
-        commits=commits,
-        commit_base_url=get_commit_url(osa_repo_url),
-        old_sha=osa_old_commit,
-        new_sha=osa_new_commit
-    )
+    template_vars = {
+        'args': args,
+        'repo': 'openstack-ansible',
+        'commits': commits,
+        'commit_base_url': get_commit_url(osa_repo_url),
+        'old_sha': osa_old_commit,
+        'new_sha': osa_new_commit
+    }
+    report = render_template('offline-header.j2', template_vars)
 
     # Get the list of OpenStack roles from the newer and older commits.
     role_yaml = get_roles(osa_repo_dir, osa_old_commit)
@@ -337,13 +344,14 @@ def run_osa_differ():
 
         # Loop through the commits and render our template.
         commits = get_commits(repo_dir, role_old_sha, role_new_sha)
-        rst = jinja_env.get_template('offline-repo-changes.j2').render(
-            repo=role['name'],
-            commits=commits,
-            commit_base_url=get_commit_url(repo_url),
-            old_sha=role_old_sha,
-            new_sha=role_new_sha
-        )
+        template_vars = {
+            'repo': role['name'],
+            'commits': commits,
+            'commit_base_url': get_commit_url(repo_url),
+            'old_sha': role_old_sha,
+            'new_sha': role_new_sha
+        }
+        rst = render_template('offline-repo-changes.j2', template_vars)
         report += rst
 
     # Get the list of OpenStack projects from newer commit and older commit.
@@ -384,14 +392,14 @@ def run_osa_differ():
 
         # Loop through the commits and render our template.
         commits = get_commits(repo_dir, project_old_sha, project_new_sha)
-        rst = jinja_env.get_template('offline-repo-changes.j2').render(
-            repo=project,
-            commits=commits,
-            commit_base_url=get_commit_url(repo_url),
-            old_sha=project_old_sha,
-            new_sha=project_new_sha
-        )
-        report += rst
+        template_vars = {
+            'repo': project,
+            'commits': commits,
+            'commit_base_url': get_commit_url(repo_url),
+            'old_sha': project_old_sha,
+            'new_sha': project_new_sha
+        }
+        rst = render_template('offline-repo-changes.j2', template_vars)
 
     # Print the report to stdout unless the user specified --quiet.
     if not args.quiet:

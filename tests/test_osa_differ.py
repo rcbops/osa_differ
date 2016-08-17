@@ -192,6 +192,36 @@ novncproxy_git_project_group: nova_console
         result = osa_differ.valid_commit(path, 'HEAD~1')
         assert not result
 
+    def test_render_template(self, tmpdir):
+        """Verify that we can render a jinja template."""
+        p = tmpdir.mkdir('test')
+        path = str(p)
+        repo = Repo.init(path)
+        for x in range(0, 10):
+            file = p / "test{0}.txt".format(x)
+            file.write_text(u"Test", encoding='utf-8')
+            repo.index.add(['test{0}.txt'.format(x)])
+            repo.index.commit("Commit #{0}".format(x))
+
+        commits = osa_differ.get_commits(path, 'HEAD~2', 'HEAD')
+
+        template_vars = {
+            'repo': 'openstack-ansible',
+            'commits': commits,
+            'commit_base_url': 'http://example.com',
+            'old_sha': 'HEAD~10',
+            'new_sha': 'HEAD~1'
+        }
+        template_filename = "offline-repo-changes.j2"
+        rst = osa_differ.render_template(template_filename,
+                                         template_vars)
+        assert isinstance(rst, unicode)
+        assert "openstack-ansible" in rst
+        assert "2 commits were found" in rst
+        assert "http://example.com" in rst
+        assert "HEAD~10" in rst
+        assert "HEAD~1" in rst
+
     def test_repo_clone(self, tmpdir, monkeypatch):
         """Verify that we can clone a repo."""
         p = tmpdir.mkdir('test')
