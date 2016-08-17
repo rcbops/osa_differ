@@ -14,13 +14,15 @@
 # limitations under the License.
 """Analyzes the differences between two OpenStack-Ansible commits."""
 import argparse
-from git import Repo
-import jinja2
 import json
 import logging
 import os
-import requests
 import sys
+
+
+from git import Repo
+import jinja2
+import requests
 import yaml
 
 

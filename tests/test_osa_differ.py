@@ -4,7 +4,6 @@ from git import Repo
 import httpretty
 import json
 from osa_differ import osa_differ
-import pytest
 
 
 class TestOSADiffer(object):
