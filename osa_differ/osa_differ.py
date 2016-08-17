@@ -252,16 +252,35 @@ def update_repo(repo_dir, repo_url, fetch=False):
     return repo
 
 
-def valid_commit(repo_dir, commit):
+def validate_commits(repo_dir, commits):
     """Test if a commit is valid for the repository."""
     repo = Repo(repo_dir)
-    try:
-        commit = repo.commit(commit)
-    except:
-        return False
+    for commit in commits:
+        try:
+            commit = repo.commit(commit)
+        except:
+            raise Exception("Commit {0} could not be found".format(commit))
 
     return True
 
+
+def validate_commit_range(repo_dir, old_commit, new_commit):
+    """Check if commit range is valid. Flip it if needed."""
+    # Are there any commits between the two commits that were provided?
+    commits = get_commits(repo_dir, old_commit, new_commit)
+    if len(commits) == 0:
+        # The user might have gotten their commits out of order. Let's flip
+        # the order of the commits and try again.
+        commits = get_commits(repo_dir, new_commit, old_commit)
+        if len(commits) == 0:
+            # Okay, so there really are no commits between the two commits
+            # provided by the user. :)
+            msg = "The commit range provided is invalid."
+            raise Exception(msg)
+        else:
+            return 'flip'
+
+    return True
 
 def run_osa_differ():
     """The script starts here."""
@@ -273,44 +292,26 @@ def run_osa_differ():
 
     # Create the storage directory if it doesn't exist already.
     try:
-        storage_directory = prepare_storage_dir(args.storage_directory)
+        storage_directory = prepare_storage_dir(args.directory)
     except OSError:
         print("ERROR: Couldn't create the storage directory {0}. "
-              "Please create it manually.".format(args.storage_directory))
+              "Please create it manually.".format(args.directory))
         sys.exit(1)
 
+    osa_old_commit = args.old_commit[0]
+    osa_new_commit = args.new_commit[0]
     osa_repo_url = "https://git.openstack.org/openstack/openstack-ansible"
     osa_repo_dir = "{0}/openstack-ansible".format(storage_directory)
     update_repo(osa_repo_dir, osa_repo_url)
 
-    # Store the commits we were provided
-    osa_old_commit = args.old_commit[0]
-    osa_new_commit = args.new_commit[0]
-
     # Are these commits valid?
-    if (not valid_commit(osa_repo_dir, osa_old_commit) or
-       not valid_commit(osa_repo_dir, osa_new_commit)):
-        print("The range of commits provided can't be found within the "
-              "OpenStack-Ansible repository:\n\n"
-              "\t{0}..{1}".format(osa_old_commit, osa_new_commit))
-        sys.exit(1)
+    validate_commits(osa_repo_dir, [osa_old_commit, osa_new_commit])
 
-    # Are there any commits between the two commits that were provided?
+    # Do we have a valid commit range?
+    validate_commit_range(osa_repo_dir, osa_old_commit, osa_new_commit)
+
+    # Get the commits in the range
     commits = get_commits(osa_repo_dir, osa_old_commit, osa_new_commit)
-    if len(commits) == 0:
-        # The user might have gotten their commits out of order. Let's flip
-        # the order of the commits and try again.
-        commits = get_commits(osa_repo_dir, osa_new_commit, osa_old_commit)
-        if len(commits) == 0:
-            # Okay, so there really are no commits between the two commits
-            # provided by the user. :)
-            print("No commits were found in the commit range provided:\n\n"
-                  "\t{0}..{1}\n\n".format(osa_old_commit, osa_new_commit))
-            sys.exit(1)
-        else:
-            logger.warning("Commits provided in reverse order; "
-                           "flipping these variables now")
-            osa_old_commit, osa_new_commit = osa_new_commit, osa_old_commit
 
     # Start off our report with a header and our OpenStack-Ansible commits.
     template_vars = {
