@@ -176,7 +176,7 @@ novncproxy_git_project_group: nova_console
         repo.index.add(['test.txt'])
         repo.index.commit('Testing')
 
-        result = osa_differ.valid_commit(path, 'HEAD')
+        result = osa_differ.validate_commits(path, ['HEAD'])
         assert result
 
     def test_commit_invalid(self, tmpdir):
@@ -189,8 +189,8 @@ novncproxy_git_project_group: nova_console
         repo.index.add(['test.txt'])
         repo.index.commit('Testing')
 
-        result = osa_differ.valid_commit(path, 'HEAD~1')
-        assert not result
+        with raises(Exception):
+            osa_differ.validate_commits(path, ['HEAD~1'])
 
     def test_prepare_storage_directory_exists(self, tmpdir):
         """Verify that we can create a storage directory."""

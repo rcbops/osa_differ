@@ -282,6 +282,7 @@ def validate_commit_range(repo_dir, old_commit, new_commit):
 
     return True
 
+
 def run_osa_differ():
     """The script starts here."""
     # Get our arguments from the command line
@@ -298,6 +299,7 @@ def run_osa_differ():
               "Please create it manually.".format(args.directory))
         sys.exit(1)
 
+    # Prepare the main OpenStack-Ansible repository
     osa_old_commit = args.old_commit[0]
     osa_new_commit = args.new_commit[0]
     osa_repo_url = "https://git.openstack.org/openstack/openstack-ansible"
