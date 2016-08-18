@@ -210,10 +210,8 @@ novncproxy_git_project_group: nova_console
         p = tmpdir.mkdir("test")
         newdir = "{0}/subdir/subdir/subdir".format(str(p))
 
-        with raises(OSError) as excinfo:
+        with raises(OSError):
             osa_differ.prepare_storage_dir(newdir)
-
-        assert "No such file or directory" in excinfo.value
 
     def test_render_template(self, tmpdir):
         """Verify that we can render a jinja template."""
@@ -238,7 +236,6 @@ novncproxy_git_project_group: nova_console
         template_filename = "offline-repo-changes.j2"
         rst = osa_differ.render_template(template_filename,
                                          template_vars)
-        assert isinstance(rst, unicode)
         assert "openstack-ansible" in rst
         assert "2 commits were found" in rst
         assert "http://example.com" in rst
