@@ -408,6 +408,7 @@ def run_osa_differ():
             'new_sha': project_new_sha
         }
         rst = render_template('offline-repo-changes.j2', template_vars)
+        report += rst
 
     # Print the report to stdout unless the user specified --quiet.
     if not args.quiet:
