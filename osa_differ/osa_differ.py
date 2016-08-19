@@ -356,11 +356,17 @@ def validate_commits(repo_dir, commits):
 def validate_commit_range(repo_dir, old_commit, new_commit):
     """Check if commit range is valid. Flip it if needed."""
     # Are there any commits between the two commits that were provided?
-    commits = get_commits(repo_dir, old_commit, new_commit)
+    try:
+        commits = get_commits(repo_dir, old_commit, new_commit)
+    except:
+        commits = []
     if len(commits) == 0:
         # The user might have gotten their commits out of order. Let's flip
         # the order of the commits and try again.
-        commits = get_commits(repo_dir, new_commit, old_commit)
+        try:
+            commits = get_commits(repo_dir, new_commit, old_commit)
+        except:
+            commits = []
         if len(commits) == 0:
             # Okay, so there really are no commits between the two commits
             # provided by the user. :)

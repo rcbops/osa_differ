@@ -185,6 +185,56 @@ novncproxy_git_project_group: nova_console
         with raises(Exception):
             osa_differ.validate_commits(path, ['HEAD~1'])
 
+    def test_commit_range_valid(self, tmpdir):
+        """Verify that we can test a commit range for validity."""
+        p = tmpdir.mkdir('test')
+        path = str(p)
+        repo = Repo.init(path)
+        file = p / 'test.txt'
+        file.write_text(u'Testing1', encoding='utf-8')
+        repo.index.add(['test.txt'])
+        repo.index.commit('Testing 1')
+        file.write_text(u'Testing2', encoding='utf-8')
+        repo.index.add(['test.txt'])
+        repo.index.commit('Testing 2')
+
+        result = osa_differ.validate_commit_range(path, 'HEAD~1', 'HEAD')
+
+        assert result
+
+    def test_commit_range_not_valid(self, tmpdir):
+        """Verify that we can test a commit range for validity."""
+        p = tmpdir.mkdir('test')
+        path = str(p)
+        repo = Repo.init(path)
+        file = p / 'test.txt'
+        file.write_text(u'Testing1', encoding='utf-8')
+        repo.index.add(['test.txt'])
+        repo.index.commit('Testing 1')
+        file.write_text(u'Testing2', encoding='utf-8')
+        repo.index.add(['test.txt'])
+        repo.index.commit('Testing 2')
+
+        with raises(Exception):
+            osa_differ.validate_commit_range(path, 'HEAD~2', 'HEAD')
+
+    def test_commit_range_flipped(self, tmpdir):
+        """Verify that we can test a commit range for validity."""
+        p = tmpdir.mkdir('test')
+        path = str(p)
+        repo = Repo.init(path)
+        file = p / 'test.txt'
+        file.write_text(u'Testing1', encoding='utf-8')
+        repo.index.add(['test.txt'])
+        repo.index.commit('Testing 1')
+        file.write_text(u'Testing2', encoding='utf-8')
+        repo.index.add(['test.txt'])
+        repo.index.commit('Testing 2')
+
+        result = osa_differ.validate_commit_range(path, 'HEAD', 'HEAD~1')
+
+        assert result == 'flip'
+
     def test_make_osa_report(self, tmpdir):
         """Verify that we can make the OSA header report."""
         p = tmpdir.mkdir('test')
@@ -248,16 +298,61 @@ novncproxy_git_project_group: nova_console
 
         assert report == ''
 
-    def publish_report(self):
+    def test_publish_report(self):
         """Verify that we can publish a report to stdout."""
         report = "Sample report"
 
         parser = osa_differ.create_parser()
         args = parser.parse_args(['HEAD~1', 'HEAD'])
 
-        result = osa_differ.publish_report(report, args)
+        result = osa_differ.publish_report(report, args, 'HEAD~1', 'HEAD')
 
         assert result == 'Sample report'
+
+    def test_publish_report_quiet(self):
+        """Verify that we can skip publishing to stdout."""
+        report = "Sample report"
+
+        parser = osa_differ.create_parser()
+        args = parser.parse_args(['HEAD~1', 'HEAD', '--quiet'])
+
+        result = osa_differ.publish_report(report, args, 'HEAD~1', 'HEAD')
+
+        assert result == ''
+
+    def test_publish_report_to_file(self, tmpdir):
+        """Verify that we can write a report to a file."""
+        report = "Sample report"
+
+        p = tmpdir.mkdir('test')
+
+        parser = osa_differ.create_parser()
+        filearg = "{0}/test.rst".format(str(p))
+        args = parser.parse_args(['HEAD~1', 'HEAD', '--file', filearg])
+
+        result = osa_differ.publish_report(report, args, 'HEAD~1', 'HEAD')
+
+        assert 'Report written to file' in result
+        assert 'test.rst' in result
+
+    @httpretty.activate
+    def test_publish_report_to_gist(self):
+        """Verify that we can post the report to a gist."""
+        json_body = {
+            'html_url': 'https://example.com/'
+        }
+        httpretty.register_uri(httpretty.POST,
+                               "https://api.github.com/gists",
+                               body=json.dumps(json_body))
+
+        report = "Sample report"
+
+        parser = osa_differ.create_parser()
+        args = parser.parse_args(['HEAD~1', 'HEAD', '--gist'])
+
+        result = osa_differ.publish_report(report, args, 'HEAD~1', 'HEAD')
+
+        assert 'Report posted to GitHub Gist' in result
 
     def test_prepare_storage_directory_exists(self, tmpdir):
         """Verify that we can create a storage directory."""
