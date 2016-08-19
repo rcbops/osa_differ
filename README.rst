@@ -21,8 +21,8 @@ OpenStack-Ansible pins various OpenStack services and OpenStack-Ansible roles
 to certain versions.  When these versions are updated, this is commonly called
 a "SHA bump".  These updates involve changes to OpenStack-Ansible's main
 repository, changes to individual OpenStack services (such as ``nova`` or
-``glance``), and changes to OpenStack-Ansible roles (such as ``openstack-
-ansible-os_nova``).
+``glance``), and changes to OpenStack-Ansible roles (such as
+``openstack-ansible-os_nova``).
 
 Following along with all of these changes can get complicated, and it can be a
 challenge for deployers who want to know if a particular OpenStack-Ansible
