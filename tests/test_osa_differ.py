@@ -228,6 +228,26 @@ novncproxy_git_project_group: nova_console
         assert "1 commit was found in `test <http://example.com>`" in report
         assert "Testing 2" in report
 
+    def test_make_report_old_pin_missing(self, tmpdir):
+        """Verify that we can make a report when the old pin is missing."""
+        p = tmpdir.mkdir('test')
+        path = str(p)
+        repo = Repo.init(path)
+        file = p / 'test.txt'
+        file.write_text(u'Testing1', encoding='utf-8')
+        repo.index.add(['test.txt'])
+        repo.index.commit('Testing 1')
+        file.write_text(u'Testing2', encoding='utf-8')
+        repo.index.add(['test.txt'])
+        repo.index.commit('Testing 2')
+
+        new_pins = [("test", "http://example.com", "HEAD")]
+        old_pins = []
+
+        report = osa_differ.make_report(str(tmpdir), old_pins, new_pins)
+
+        assert report == ''
+
     def test_prepare_storage_directory_exists(self, tmpdir):
         """Verify that we can create a storage directory."""
         p = tmpdir.mkdir("test")
