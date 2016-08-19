@@ -15,7 +15,6 @@
 """Analyzes the differences between two OpenStack-Ansible commits."""
 import argparse
 import json
-import logging
 import os
 import sys
 
@@ -83,8 +82,7 @@ commits in OpenStack-Ansible.
         action="store_true",
         help="Skip checking for changes in OpenStack-Ansible roles"
     )
-    output_desc = ("Note: Output is always printed to stdout unless "
-                   "--quiet is provided.")
+    output_desc = ("Output is printed to stdout by default.")
     output_opts = parser.add_argument_group('Output options', output_desc)
     output_opts.add_argument(
         '--quiet',
@@ -129,18 +127,6 @@ def get_commit_url(repo_url):
     return repo_url
 
 
-def get_logger(debug=False):
-    """Set up the logger."""
-    log_format = "%(asctime)s - %(levelname)s - %(message)s"
-    logging.basicConfig(level=logging.WARNING, format=log_format)
-    logger = logging.getLogger(__name__)
-
-    if debug:
-        logger.setLevel(logging.DEBUG)
-
-    return logger
-
-
 def get_projects(osa_repo_dir, yaml_files, commit):
     """Get all projects from multiple YAML files."""
     yaml_parsed = []
@@ -156,7 +142,7 @@ def get_projects(osa_repo_dir, yaml_files, commit):
 
     merged_dicts = {k: v for d in yaml_parsed for k, v in d.items()}
 
-    return merged_dicts
+    return normalize_yaml(merged_dicts)
 
 
 def get_roles(osa_repo_dir, commit):
@@ -169,7 +155,90 @@ def get_roles(osa_repo_dir, commit):
     with open(filename, 'r') as f:
         roles_yaml = yaml.load(f)
 
-    return roles_yaml
+    return normalize_yaml(roles_yaml)
+
+
+def make_osa_report(repo_dir, old_commit, new_commit,
+                    args):
+    """Create initial RST report header for OpenStack-Ansible."""
+    osa_repo_url = "https://git.openstack.org/openstack/openstack-ansible"
+    update_repo(repo_dir, osa_repo_url, args.update)
+
+    # Are these commits valid?
+    validate_commits(repo_dir, [old_commit, new_commit])
+
+    # Do we have a valid commit range?
+    validate_commit_range(repo_dir, old_commit, new_commit)
+
+    # Get the commits in the range
+    commits = get_commits(repo_dir, old_commit, new_commit)
+
+    # Start off our report with a header and our OpenStack-Ansible commits.
+    template_vars = {
+        'args': args,
+        'repo': 'openstack-ansible',
+        'commits': commits,
+        'commit_base_url': get_commit_url(osa_repo_url),
+        'old_sha': old_commit,
+        'new_sha': new_commit
+    }
+    return render_template('offline-header.j2', template_vars)
+
+
+def make_report(storage_directory, old_pins, new_pins, do_update=False):
+    """Create RST report from a list of projects/roles."""
+    report = ""
+    for new_pin in new_pins:
+        repo_name, repo_url, commit_sha = new_pin
+
+        # Prepare our repo directory and clone the repo if needed. Only pull
+        # if the user requests it.
+        repo_dir = "{0}/{1}".format(storage_directory, repo_name)
+        update_repo(repo_dir, repo_url, do_update)
+
+        # Get the old SHA from the previous pins. If this pin didn't exist
+        # in the previous OSA revision, skip it. This could happen with newly-
+        # added projects and roles.
+        try:
+            commit_sha_old = next(x[2] for x in old_pins if x[0] == repo_name)
+        except:
+            continue
+
+        # Loop through the commits and render our template.
+        commits = get_commits(repo_dir, commit_sha_old, commit_sha)
+        template_vars = {
+            'repo': repo_name,
+            'commits': commits,
+            'commit_base_url': get_commit_url(repo_url),
+            'old_sha': commit_sha_old,
+            'new_sha': commit_sha
+        }
+        rst = render_template('offline-repo-changes.j2', template_vars)
+        report += rst
+
+    return report
+
+
+def normalize_yaml(yaml):
+    """Normalize the YAML from project and role lookups.
+
+    These are returned as a list of tuples.
+    """
+    if isinstance(yaml, list):
+        # Normalize the roles YAML data
+        normalized_yaml = [(x['name'], x['src'], x.get('version', 'HEAD'))
+                           for x in yaml]
+    else:
+        # Extract the project names from the roles YAML and create a list of
+        # tuples.
+        projects = [x[:-9] for x in yaml.keys() if x.endswith('git_repo')]
+        normalized_yaml = []
+        for project in projects:
+            repo_url = yaml['{0}_git_repo'.format(project)]
+            commit_sha = yaml['{0}_git_install_branch'.format(project)]
+            normalized_yaml.append((project, repo_url, commit_sha))
+
+    return normalized_yaml
 
 
 def parse_arguments():
@@ -195,6 +264,26 @@ def post_gist(report_data, old_sha, new_sha):
     r = requests.post(url, data=json.dumps(payload))
     response = r.json()
     return response['html_url']
+
+
+def publish_report(report, args, old_commit, new_commit):
+    """Publish the RST report based on the user request."""
+    # Print the report to stdout unless the user specified --quiet.
+    output = ""
+
+    if not args.quiet and not args.gist and not args.file:
+        return report
+
+    if args.gist:
+        gist_url = post_gist(report, old_commit, new_commit)
+        output += "\nReport posted to GitHub Gist: {0}".format(gist_url)
+
+    if args.file is not None:
+        with open(args.file, 'w') as f:
+            f.write(report)
+        output += "\nReport written to file: {0}".format(args.file)
+
+    return output
 
 
 def prepare_storage_dir(storage_directory):
@@ -288,9 +377,6 @@ def run_osa_differ():
     # Get our arguments from the command line
     args = parse_arguments()
 
-    # Configure logging
-    logger = get_logger(args.debug)
-
     # Create the storage directory if it doesn't exist already.
     try:
         storage_directory = prepare_storage_dir(args.directory)
@@ -299,73 +385,28 @@ def run_osa_differ():
               "Please create it manually.".format(args.directory))
         sys.exit(1)
 
-    # Prepare the main OpenStack-Ansible repository
+    # Assemble some variables for the OSA repository.
     osa_old_commit = args.old_commit[0]
     osa_new_commit = args.new_commit[0]
-    osa_repo_url = "https://git.openstack.org/openstack/openstack-ansible"
     osa_repo_dir = "{0}/openstack-ansible".format(storage_directory)
-    update_repo(osa_repo_dir, osa_repo_url)
 
-    # Are these commits valid?
-    validate_commits(osa_repo_dir, [osa_old_commit, osa_new_commit])
-
-    # Do we have a valid commit range?
-    validate_commit_range(osa_repo_dir, osa_old_commit, osa_new_commit)
-
-    # Get the commits in the range
-    commits = get_commits(osa_repo_dir, osa_old_commit, osa_new_commit)
-
-    # Start off our report with a header and our OpenStack-Ansible commits.
-    template_vars = {
-        'args': args,
-        'repo': 'openstack-ansible',
-        'commits': commits,
-        'commit_base_url': get_commit_url(osa_repo_url),
-        'old_sha': osa_old_commit,
-        'new_sha': osa_new_commit
-    }
-    report = render_template('offline-header.j2', template_vars)
+    # Generate OpenStack-Ansible report header.
+    report_rst = make_osa_report(osa_repo_dir,
+                                 osa_old_commit,
+                                 osa_new_commit,
+                                 args)
 
     # Get the list of OpenStack roles from the newer and older commits.
     role_yaml = get_roles(osa_repo_dir, osa_old_commit)
     role_yaml_latest = get_roles(osa_repo_dir, osa_new_commit)
 
-    # Don't loop through the roles if the user asked us not to do so.
-    if args.skip_roles:
-        role_yaml_latest = []
-    else:
-        report += ("OpenStack-Ansible Roles\n"
+    # Generate the role report.
+    report_rst += ("OpenStack-Ansible Roles\n"
                    "-----------------------")
-
-    for role in role_yaml_latest:
-        # Prepare our repo directory and clone the repo if needed. Only pull
-        # if the user requests it.
-        repo_dir = "{0}/{1}".format(storage_directory, role['name'])
-        repo_url = role['src']
-        update_repo(repo_dir, repo_url, args.update)
-
-        # Get the commit SHAs for this role from the older and newer
-        # OpenStack-Ansible commits. If we can't get the older commit SHA, it
-        # could be because the role is newly added and there wasn't an older
-        # revision. In that case, skip it.
-        role_new_sha = role['version']
-        try:
-            role_old_sha = next(x['version'] for x in role_yaml
-                                if x['name'] == role['name'])
-        except:
-            continue
-
-        # Loop through the commits and render our template.
-        commits = get_commits(repo_dir, role_old_sha, role_new_sha)
-        template_vars = {
-            'repo': role['name'],
-            'commits': commits,
-            'commit_base_url': get_commit_url(repo_url),
-            'old_sha': role_old_sha,
-            'new_sha': role_new_sha
-        }
-        rst = render_template('offline-repo-changes.j2', template_vars)
-        report += rst
+    report_rst += make_report(storage_directory,
+                              role_yaml,
+                              role_yaml_latest,
+                              args.update)
 
     # Get the list of OpenStack projects from newer commit and older commit.
     yaml_files = [
@@ -376,64 +417,17 @@ def run_osa_differ():
     project_yaml_latest = get_projects(osa_repo_dir, yaml_files,
                                        osa_new_commit)
 
-    # Narrow down a list of projects from the latest YAML we retrieved.
-    projects = sorted([x[:-9] for x in project_yaml_latest.keys()
-                      if x.endswith('git_repo')])
+    # Generate the project report.
+    report_rst += ("OpenStack-Ansible Projects\n"
+                   "--------------------------")
+    report_rst += make_report(storage_directory,
+                              project_yaml,
+                              project_yaml_latest,
+                              args.update)
 
-    # Don't loop through the projects if the user asked us not to do so.
-    if args.skip_projects:
-        project_yaml_latest = []
-    else:
-        report += ("OpenStack Projects\n"
-                   "------------------")
-
-    # Loop through each project and find changes. If we've been asked to update
-    # the repository, let's do that too.
-    logger.info("Looping through projects to check for changes")
-    for project in projects:
-        # Prepare our repo directory and clone the repo if needed. Only pull
-        # if the user requests it.
-        repo_dir = "{0}/{1}".format(storage_directory, project)
-        repo_url = project_yaml_latest['{0}_git_repo'.format(project)]
-        update_repo(repo_dir, repo_url, args.update)
-
-        # Get the commit SHAs for this project from the older and newer
-        # OpenStack-Ansible commits.
-        key_for_sha = "{0}_git_install_branch".format(project)
-        project_new_sha = project_yaml_latest[key_for_sha]
-
-        # There's a chance that this project was recently added and it might
-        # not have existed in the YAML files in the previous OSA release. If
-        # that happens, let's just skip it.
-        try:
-            project_old_sha = project_yaml[key_for_sha]
-        except KeyError:
-            continue
-
-        # Loop through the commits and render our template.
-        commits = get_commits(repo_dir, project_old_sha, project_new_sha)
-        template_vars = {
-            'repo': project,
-            'commits': commits,
-            'commit_base_url': get_commit_url(repo_url),
-            'old_sha': project_old_sha,
-            'new_sha': project_new_sha
-        }
-        rst = render_template('offline-repo-changes.j2', template_vars)
-        report += rst
-
-    # Print the report to stdout unless the user specified --quiet.
-    if not args.quiet:
-        print(report)
-
-    if args.gist:
-        gist_url = post_gist(report, osa_old_commit, osa_new_commit)
-        print("Report posted to GitHub Gist: {0}".format(gist_url))
-
-    if args.file is not None:
-        print("Report written to file: {0}".format(args.file))
-        with open(args.file, 'w') as f:
-            f.write(report)
+    # Publish report according to the user's request.
+    output = publish_report(report_rst, args, osa_old_commit, osa_new_commit)
+    print(output)
 
 if __name__ == "__main__":
     run_osa_differ()

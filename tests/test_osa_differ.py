@@ -124,7 +124,9 @@ novncproxy_git_project_group: nova_console
         projects = osa_differ.get_projects(path,
                                            ['test1.yml', 'test2.yml'],
                                            'HEAD')
-        assert isinstance(projects, dict)
+        assert isinstance(projects, list)
+        assert 'novncproxy' in [x[0] for x in projects]
+        assert 'tempest' in [x[0] for x in projects]
 
     def test_get_roles(self, tmpdir):
         """Verify that we can get OSA role information."""
@@ -135,6 +137,7 @@ novncproxy_git_project_group: nova_console
         file.write_text(u"""
 - name: apt_package_pinning
   scm: git
+  src: https://github.com/openstack/openstack-ansible-apt_package_pinning
   version: master
 """, encoding='utf-8')
         repo.index.add(['ansible-role-requirements.yml'])
@@ -142,17 +145,7 @@ novncproxy_git_project_group: nova_console
 
         roles = osa_differ.get_roles(path, 'HEAD')
         assert isinstance(roles, list)
-        assert roles[0]['name'] == 'apt_package_pinning'
-
-    def test_logger_setup(self):
-        """Verify that we can create a logger."""
-        logger = osa_differ.get_logger()
-        assert logger.level == 0
-
-    def test_logger_setup_debug(self):
-        """Verify that we can create a debug logger."""
-        logger = osa_differ.get_logger(debug=True)
-        assert logger.level == 10
+        assert roles[0][0] == 'apt_package_pinning'
 
     @httpretty.activate
     def test_post_gist(self):
