@@ -345,10 +345,15 @@ def run_osa_differ():
         update_repo(repo_dir, repo_url, args.update)
 
         # Get the commit SHAs for this role from the older and newer
-        # OpenStack-Ansible commits.
-        role_old_sha = next(x['version'] for x in role_yaml
-                            if x['name'] == role['name'])
+        # OpenStack-Ansible commits. If we can't get the older commit SHA, it
+        # could be because the role is newly added and there wasn't an older
+        # revision. In that case, skip it.
         role_new_sha = role['version']
+        try:
+            role_old_sha = next(x['version'] for x in role_yaml
+                                if x['name'] == role['name'])
+        except:
+            continue
 
         # Loop through the commits and render our template.
         commits = get_commits(repo_dir, role_old_sha, role_new_sha)
