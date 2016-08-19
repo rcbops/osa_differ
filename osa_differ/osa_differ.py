@@ -424,8 +424,8 @@ def run_osa_differ():
                                        osa_new_commit)
 
     # Generate the project report.
-    report_rst += ("OpenStack-Ansible Projects\n"
-                   "--------------------------")
+    report_rst += ("OpenStack Projects\n"
+                   "------------------")
     report_rst += make_report(storage_directory,
                               project_yaml,
                               project_yaml_latest,
