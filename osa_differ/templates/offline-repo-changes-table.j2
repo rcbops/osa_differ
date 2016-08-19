@@ -8,7 +8,7 @@
 
 {% if commits | length < 1 %}
 No commits were found in `{{ repo }} <{{ commit_base_url }}>`_ between the
-OpenStack-Ansible commits provided.
+commits provided.
 {% elif commits | length == 1 %}
 1 commit was found in `{{ repo }} <{{ commit_base_url }}>`_ from
 ``{{ old_sha[0:8] }}`` to ``{{ new_sha[0:8] }}``:
