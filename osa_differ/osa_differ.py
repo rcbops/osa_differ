@@ -395,8 +395,15 @@ def run_osa_differ():
         # Get the commit SHAs for this project from the older and newer
         # OpenStack-Ansible commits.
         key_for_sha = "{0}_git_install_branch".format(project)
-        project_old_sha = project_yaml[key_for_sha]
         project_new_sha = project_yaml_latest[key_for_sha]
+
+        # There's a chance that this project was recently added and it might
+        # not have existed in the YAML files in the previous OSA release. If
+        # that happens, let's just skip it.
+        try:
+            project_old_sha = project_yaml[key_for_sha]
+        except KeyError:
+            continue
 
         # Loop through the commits and render our template.
         commits = get_commits(repo_dir, project_old_sha, project_new_sha)
