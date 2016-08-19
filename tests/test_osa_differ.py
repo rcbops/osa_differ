@@ -248,6 +248,17 @@ novncproxy_git_project_group: nova_console
 
         assert report == ''
 
+    def publish_report(self):
+        """Verify that we can publish a report to stdout."""
+        report = "Sample report"
+
+        parser = osa_differ.create_parser()
+        args = parser.parse_args(['HEAD~1', 'HEAD'])
+
+        result = osa_differ.publish_report(report, args)
+
+        assert result == 'Sample report'
+
     def test_prepare_storage_directory_exists(self, tmpdir):
         """Verify that we can create a storage directory."""
         p = tmpdir.mkdir("test")
