@@ -19,12 +19,12 @@ OpenStack-Ansible commits provided.
 {% endif %}
 
 {% if commits | length > 0 %}
-+-{{ '-' * (commit_base_url | length + 14) }}-+-{{ '-' * 80}}-+
++-{{ '-' * (commit_base_url | length + 62) }}-+-{{ '-' * 80}}-+
 {% for commit in commits if not commit.summary[0:7] == 'Merge "' %}
-| `{{ commit.hexsha[0:8] }} <{{ commit_base_url }}>`_ | {{ commit.summary[0:80].ljust(80) }} |
+| `{{ commit.hexsha[0:8] }} <{{ commit_base_url }}/commit/{{ commit.hexsha }}>`_ | {{ commit.summary[0:80].ljust(80) }} |
 {% if not loop.last %}
-+-{{ '-' * (commit_base_url | length + 14) }}-+-{{ '-' * 80}}-+
++-{{ '-' * (commit_base_url | length + 62) }}-+-{{ '-' * 80}}-+
 {% endif %}
 {% endfor %}
-+-{{ '-' * (commit_base_url | length + 14) }}-+-{{ '-' * 80}}-+
++-{{ '-' * (commit_base_url | length + 62) }}-+-{{ '-' * 80}}-+
 {% endif %}
