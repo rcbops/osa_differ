@@ -205,6 +205,7 @@ def make_report(storage_directory, old_pins, new_pins, do_update=False):
             continue
 
         # Loop through the commits and render our template.
+        validate_commits(repo_dir, [commit_sha_old, commit_sha])
         commits = get_commits(repo_dir, commit_sha_old, commit_sha)
         template_vars = {
             'repo': repo_name,
@@ -348,7 +349,10 @@ def validate_commits(repo_dir, commits):
         try:
             commit = repo.commit(commit)
         except:
-            raise Exception("Commit {0} could not be found".format(commit))
+            msg = ("Commit {0} could not be found. You may need to pass "
+                   "--update to fetch the latest updates to the git "
+                   "repositories stored on you local computer.".format(commit))
+            raise Exception(msg)
 
     return True
 
@@ -370,7 +374,10 @@ def validate_commit_range(repo_dir, old_commit, new_commit):
         if len(commits) == 0:
             # Okay, so there really are no commits between the two commits
             # provided by the user. :)
-            msg = "The commit range provided is invalid."
+            msg = ("The commit range {0}..{1} is invalid for {2}."
+                   "You may need to use the --update option to fetch the "
+                   "latest updates to the git repositories stored on your "
+                   "local computer.".format(old_commit, new_commit, repo_dir))
             raise Exception(msg)
         else:
             return 'flip'
