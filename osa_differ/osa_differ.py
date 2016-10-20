@@ -14,6 +14,7 @@
 # limitations under the License.
 """Analyzes the differences between two OpenStack-Ansible commits."""
 import argparse
+import glob
 import json
 import os
 import sys
@@ -127,17 +128,19 @@ def get_commit_url(repo_url):
     return repo_url
 
 
-def get_projects(osa_repo_dir, yaml_files, commit):
+def get_projects(osa_repo_dir, commit):
     """Get all projects from multiple YAML files."""
+    # Check out the correct commit SHA from the repository
+    repo = Repo(osa_repo_dir)
+    repo.head.reference = repo.commit(commit)
+    repo.head.reset(index=True, working_tree=True)
+
+    yaml_files = glob.glob(
+        '{0}/playbooks/defaults/repo_packages/*.yml'.format(osa_repo_dir)
+    )
     yaml_parsed = []
     for yaml_file in yaml_files:
-        # Check out the correct commit SHA from the repository
-        repo = Repo(osa_repo_dir)
-        repo.head.reference = repo.commit(commit)
-        repo.head.reset(index=True, working_tree=True)
-
-        filename = "{0}/{1}".format(osa_repo_dir, yaml_file)
-        with open(filename, 'r') as f:
+        with open(yaml_file, 'r') as f:
             yaml_parsed.append(yaml.load(f))
 
     merged_dicts = {k: v for d in yaml_parsed for k, v in d.items()}
@@ -422,12 +425,8 @@ def run_osa_differ():
                               args.update)
 
     # Get the list of OpenStack projects from newer commit and older commit.
-    yaml_files = [
-        'playbooks/defaults/repo_packages/openstack_services.yml',
-        'playbooks/defaults/repo_packages/openstack_other.yml'
-    ]
-    project_yaml = get_projects(osa_repo_dir, yaml_files, osa_old_commit)
-    project_yaml_latest = get_projects(osa_repo_dir, yaml_files,
+    project_yaml = get_projects(osa_repo_dir, osa_old_commit)
+    project_yaml_latest = get_projects(osa_repo_dir,
                                        osa_new_commit)
 
     # Generate the project report.

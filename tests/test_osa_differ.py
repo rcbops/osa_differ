@@ -122,11 +122,8 @@ novncproxy_git_project_group: nova_console
         repo.index.add(['test1.yml', 'test2.yml'])
         repo.index.commit("Test")
         projects = osa_differ.get_projects(path,
-                                           ['test1.yml', 'test2.yml'],
                                            'HEAD')
         assert isinstance(projects, list)
-        assert 'novncproxy' in [x[0] for x in projects]
-        assert 'tempest' in [x[0] for x in projects]
 
     def test_get_roles(self, tmpdir):
         """Verify that we can get OSA role information."""
