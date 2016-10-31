@@ -24,6 +24,7 @@ from git import Repo
 import jinja2
 import requests
 import yaml
+from . import exceptions
 
 
 def create_parser():
@@ -355,7 +356,7 @@ def validate_commits(repo_dir, commits):
             msg = ("Commit {0} could not be found. You may need to pass "
                    "--update to fetch the latest updates to the git "
                    "repositories stored on you local computer.".format(commit))
-            raise Exception(msg)
+            raise exceptions.InvalidCommitException(msg)
 
     return True
 
@@ -381,7 +382,7 @@ def validate_commit_range(repo_dir, old_commit, new_commit):
                    "You may need to use the --update option to fetch the "
                    "latest updates to the git repositories stored on your "
                    "local computer.".format(old_commit, new_commit, repo_dir))
-            raise Exception(msg)
+            raise exceptions.InvalidCommitRangeException(msg)
         else:
             return 'flip'
 
