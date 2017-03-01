@@ -4,8 +4,11 @@ import json
 
 
 from git import Repo
+
 import httpretty
+
 from osa_differ import osa_differ
+
 from pytest import raises
 
 

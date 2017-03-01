@@ -21,9 +21,13 @@ import sys
 
 
 from git import Repo
+
 import jinja2
+
 import requests
+
 import yaml
+
 from . import exceptions
 
 
@@ -441,6 +445,7 @@ def run_osa_differ():
     # Publish report according to the user's request.
     output = publish_report(report_rst, args, osa_old_commit, osa_new_commit)
     print(output)
+
 
 if __name__ == "__main__":
     run_osa_differ()
