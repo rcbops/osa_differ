@@ -418,7 +418,7 @@ def run_osa_differ():
     role_yaml_latest = get_roles(osa_repo_dir, osa_new_commit)
 
     # Generate the role report.
-    report_rst += ("OpenStack-Ansible Roles\n"
+    report_rst += ("\nOpenStack-Ansible Roles\n"
                    "-----------------------")
     report_rst += make_report(storage_directory,
                               role_yaml,
@@ -431,7 +431,7 @@ def run_osa_differ():
                                        osa_new_commit)
 
     # Generate the project report.
-    report_rst += ("OpenStack Projects\n"
+    report_rst += ("\nOpenStack Projects\n"
                    "------------------")
     report_rst += make_report(storage_directory,
                               project_yaml,
