@@ -421,26 +421,29 @@ def run_osa_differ():
     role_yaml = get_roles(osa_repo_dir, osa_old_commit)
     role_yaml_latest = get_roles(osa_repo_dir, osa_new_commit)
 
-    # Generate the role report.
-    report_rst += ("\nOpenStack-Ansible Roles\n"
-                   "-----------------------")
-    report_rst += make_report(storage_directory,
-                              role_yaml,
-                              role_yaml_latest,
-                              args.update)
+    if not args.skip_roles:
+        # Generate the role report.
+        report_rst += ("\nOpenStack-Ansible Roles\n"
+                       "-----------------------")
+        report_rst += make_report(storage_directory,
+                                  role_yaml,
+                                  role_yaml_latest,
+                                  args.update)
 
-    # Get the list of OpenStack projects from newer commit and older commit.
-    project_yaml = get_projects(osa_repo_dir, osa_old_commit)
-    project_yaml_latest = get_projects(osa_repo_dir,
-                                       osa_new_commit)
+    if not args.skip_projects:
+        # Get the list of OpenStack projects from newer commit and older
+        # commit.
+        project_yaml = get_projects(osa_repo_dir, osa_old_commit)
+        project_yaml_latest = get_projects(osa_repo_dir,
+                                           osa_new_commit)
 
-    # Generate the project report.
-    report_rst += ("\nOpenStack Projects\n"
-                   "------------------")
-    report_rst += make_report(storage_directory,
-                              project_yaml,
-                              project_yaml_latest,
-                              args.update)
+        # Generate the project report.
+        report_rst += ("\nOpenStack Projects\n"
+                       "------------------")
+        report_rst += make_report(storage_directory,
+                                  project_yaml,
+                                  project_yaml_latest,
+                                  args.update)
 
     # Publish report according to the user's request.
     output = publish_report(report_rst, args, osa_old_commit, osa_new_commit)
