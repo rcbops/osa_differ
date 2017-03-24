@@ -2,3 +2,4 @@ GitPython
 jinja2
 PyYAML
 requests
+reno
