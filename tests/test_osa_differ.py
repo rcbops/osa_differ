@@ -496,6 +496,7 @@ novncproxy_git_project_group: nova_console
         assert not result.is_dirty()
 
     def test_get_release_notes(self, tmpdir):
+        """Ensure getting release notes works."""
         p = tmpdir.mkdir('releasenotes')
         tmpdir.mkdir('releasenotes/notes')
         path = str(p)
