@@ -16,6 +16,7 @@
 import argparse
 import glob
 import json
+import logging
 import os
 import re
 import subprocess
@@ -31,6 +32,13 @@ import requests
 import yaml
 
 from . import exceptions
+
+
+# Configure logging
+log = logging.getLogger()
+log.setLevel(logging.ERROR)
+stdout_handler = logging.StreamHandler(sys.stdout)
+log.addHandler(stdout_handler)
 
 
 def create_parser():
@@ -60,6 +68,12 @@ commits in OpenStack-Ansible.
         action='store',
         nargs=1,
         help="Git SHA of the newer commit",
+    )
+    parser.add_argument(
+        '--verbose',
+        action='store_true',
+        default=False,
+        help="Enable info output",
     )
     parser.add_argument(
         '--debug',
@@ -352,8 +366,10 @@ def update_repo(repo_dir, repo_url, fetch=False):
     """Clone the repo if it doesn't exist already, otherwise update it."""
     repo_exists = os.path.exists(repo_dir)
     if repo_exists:
+        log.info("Pulling repo {} (fetch: {})".format(repo_url, fetch))
         repo = repo_pull(repo_dir, repo_url, fetch)
     else:
+        log.info("Cloning repo {}".format(repo_url))
         repo = repo_clone(repo_dir, repo_url)
 
     return repo
@@ -403,6 +419,7 @@ def validate_commit_range(repo_dir, old_commit, new_commit):
 
 
 def get_release_notes(osa_repo_dir, osa_old_commit, osa_new_commit):
+    """Get release notes between the two revisions."""
     repo = Repo(osa_repo_dir)
 
     # Get a list of tags, sorted
@@ -501,12 +518,12 @@ def get_release_notes(osa_repo_dir, osa_old_commit, osa_new_commit):
 
 def _equal_to_tilde(matchobj):
     num_of_equal = len(matchobj.group(0))
-    return '~'*num_of_equal
+    return '~' * num_of_equal
 
 
 def _dash_to_num(matchobj):
     num_of_dashes = len(matchobj.group(0))
-    return '#'*num_of_dashes
+    return '#' * num_of_dashes
 
 
 def _fix_tags_list(tags):
@@ -532,6 +549,12 @@ def run_osa_differ():
     """The script starts here."""
     # Get our arguments from the command line
     args = parse_arguments()
+
+    # Set up DEBUG logging if needed
+    if args.debug:
+        log.setLevel(logging.DEBUG)
+    elif args.verbose:
+        log.setLevel(logging.INFO)
 
     # Create the storage directory if it doesn't exist already.
     try:

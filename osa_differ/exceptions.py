@@ -11,15 +11,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Special exceptions for handling issues in osa-differ."""
 
 
 class InvalidCommitException(Exception):
-    """Commit cannot be found"""
+    """Commit cannot be found."""
+
     def __init__(self, *args, **kwargs):
+        """Handle the exception."""
         Exception.__init__(self, *args, **kwargs)
 
 
 class InvalidCommitRangeException(Exception):
-    """Commit range is invalid"""
+    """Commit range is invalid."""
+
     def __init__(self, *args, **kwargs):
+        """Handle the exception."""
         Exception.__init__(self, *args, **kwargs)
