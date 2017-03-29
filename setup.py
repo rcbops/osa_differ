@@ -33,14 +33,12 @@ if sys.version_info < (2, 7):
 
 setup(
     name='osa_differ',
-    version='0.2.1',
+    version='0.2.2',
     author='Major Hayden',
     author_email='major@mhtx.net',
     description="Find changes between OpenStack-Ansible versions",
     install_requires=required_packages,
     packages=['osa_differ'],
-    package_dir={'osa_differ': 'osa_differ'},
-    package_data={'osa_differ': ['templates/*.j2']},
     include_package_data=True,
     url='https://github.com/major/osa-differ',
     entry_points='''

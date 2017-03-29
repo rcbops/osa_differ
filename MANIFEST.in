@@ -1,5 +1,6 @@
 include LICENSE
 include README.rst
-include osa_differ/template/offline-header.j2
-include osa_differ/template/offline-repo-changes.j2
+include osa_differ/templates/offline-header.j2
+include osa_differ/templates/offline-repo-changes.j2
+include osa_differ/templates/offline-repo-changes-table.j2
 recursive-include tests *
