@@ -39,8 +39,6 @@ setup(
     description="Find changes between OpenStack-Ansible versions",
     install_requires=required_packages,
     packages=['osa_differ'],
-    package_dir={'osa_differ': 'osa_differ'},
-    package_data={'osa_differ': ['templates/*.j2']},
     include_package_data=True,
     url='https://github.com/major/osa-differ',
     entry_points='''
