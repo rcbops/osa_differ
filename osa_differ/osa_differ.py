@@ -42,8 +42,8 @@ log.addHandler(stdout_handler)
 
 
 def create_parser():
-    """Setup argument Parsing."""
-    description = """OpenStack-Ansible Release Diff Generator
+    """Create argument parser."""
+    description = """Generate OpenStack-Ansible Diff
 ----------------------------------------
 
 Finds changes in OpenStack projects and OpenStack-Ansible roles between two
@@ -352,13 +352,15 @@ def repo_pull(repo_dir, repo_url, fetch=False):
     """Reset repository and optionally update it."""
     # Make sure the repository is reset to the master branch.
     repo = Repo(repo_dir)
-    repo.heads.master.checkout()
+    repo.git.clean("-df")
+    repo.git.reset("--hard")
+    repo.git.checkout("master")
     repo.head.reset(index=True, working_tree=True)
 
     # Only get the latest updates if requested.
     if fetch:
-        repo.remotes['origin'].pull()
-
+        repo.git.fetch([repo_url, "+refs/heads/*:refs/remotes/origin/*"])
+        repo.git.reset(["--hard", "FETCH_HEAD"])
     return repo
 
 
@@ -366,7 +368,7 @@ def update_repo(repo_dir, repo_url, fetch=False):
     """Clone the repo if it doesn't exist already, otherwise update it."""
     repo_exists = os.path.exists(repo_dir)
     if repo_exists:
-        log.info("Pulling repo {} (fetch: {})".format(repo_url, fetch))
+        log.info("Fetching repo {} (fetch: {})".format(repo_url, fetch))
         repo = repo_pull(repo_dir, repo_url, fetch)
     else:
         log.info("Cloning repo {}".format(repo_url))
@@ -377,14 +379,16 @@ def update_repo(repo_dir, repo_url, fetch=False):
 
 def validate_commits(repo_dir, commits):
     """Test if a commit is valid for the repository."""
+    log.debug("Validating {c} exist in {r}".format(c=commits, r=repo_dir))
     repo = Repo(repo_dir)
     for commit in commits:
         try:
             commit = repo.commit(commit)
         except:
-            msg = ("Commit {0} could not be found. You may need to pass "
-                   "--update to fetch the latest updates to the git "
-                   "repositories stored on you local computer.".format(commit))
+            msg = ("Commit {commit} could not be found in repo {repo}. "
+                   "You may need to pass --update to fetch the latest "
+                   "updates to the git repositories stored on "
+                   "your local computer.".format(repo=repo_dir, commit=commit))
             raise exceptions.InvalidCommitException(msg)
 
     return True
@@ -546,7 +550,7 @@ def _fix_tags_list(tags):
 
 
 def run_osa_differ():
-    """The script starts here."""
+    """Start here."""
     # Get our arguments from the command line
     args = parse_arguments()
 

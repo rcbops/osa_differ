@@ -488,10 +488,12 @@ novncproxy_git_project_group: nova_console
         repo.index.commit('Testing')
         repo.create_remote('origin', url='http://example.com')
 
-        monkeypatch.setattr("git.remote.Remote.pull", lambda x: True)
+        monkeypatch.setattr(
+            "git.cmd.Git._call_process", lambda *args, **kwargs: True)
         result = osa_differ.repo_pull(path,
                                       "http://example.com",
                                       fetch=True)
+        monkeypatch.undo()
         assert result.active_branch.name == 'master'
         assert not result.is_dirty()
 
