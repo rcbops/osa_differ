@@ -359,7 +359,11 @@ def repo_pull(repo_dir, repo_url, fetch=False):
 
     # Only get the latest updates if requested.
     if fetch:
-        repo.git.fetch([repo_url, "+refs/heads/*:refs/remotes/origin/*"])
+        repo.git.fetch(["-u", "-v", "-f",
+                        repo_url,
+                        "+refs/heads/*:refs/remotes/origin/*",
+                        "+refs/heads/*:refs/heads/*",
+                        "+refs/tags/*:refs/tags/*"])
         repo.git.reset(["--hard", "FETCH_HEAD"])
     return repo
 
