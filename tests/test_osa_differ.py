@@ -45,10 +45,16 @@ class TestOSADiffer(object):
         assert isinstance(parser, argparse.ArgumentParser)
 
     def test_commit_url_github(self):
-        """Verify that GitHub URLs are unaltered."""
+        """Verify that GitHub URLs without ".git" are unaltered."""
         repo_url = "https://github.com/openstack/openstack-ansible"
         result = osa_differ.get_commit_url(repo_url)
         assert result == repo_url
+
+    def test_commit_url_github_ending_with_dotgit(self):
+        """Verify that ".git" is stripped from GitHub URLs."""
+        repo_url = "https://github.com/openstack/openstack-ansible.git"
+        result = osa_differ.get_commit_url(repo_url)
+        assert result == repo_url[:-4]
 
     def test_commit_url_openstack(self):
         """Verify that OpenStack URLs are fixed."""
