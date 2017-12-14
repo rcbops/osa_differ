@@ -150,7 +150,9 @@ novncproxy_git_project_group: nova_console
         repo.index.add(['ansible-role-requirements.yml'])
         repo.index.commit("Test")
 
-        roles = osa_differ.get_roles(path, 'HEAD')
+        roles = osa_differ.get_roles(path,
+                                     'HEAD',
+                                     'ansible-role-requirements.yml')
         assert isinstance(roles, list)
         assert roles[0][0] == 'apt_package_pinning'
 

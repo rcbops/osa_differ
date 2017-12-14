@@ -88,6 +88,12 @@ commits in OpenStack-Ansible.
         help="Git repo storage directory (default: ~/.osa-differ)",
     )
     parser.add_argument(
+        '-rr', '--role-requirements',
+        action='store',
+        default='ansible-role-requirements.yml',
+        help="Name of the ansible role requirements file to read",
+    )
+    parser.add_argument(
         '-u', '--update',
         action='store_true',
         default=False,
@@ -176,13 +182,13 @@ def get_projects(osa_repo_dir, commit):
     return normalize_yaml(merged_dicts)
 
 
-def get_roles(osa_repo_dir, commit):
+def get_roles(osa_repo_dir, commit, role_requirements):
     """Read OSA role information at a particular commit."""
     repo = Repo(osa_repo_dir)
     repo.head.reference = repo.commit(commit)
     repo.head.reset(index=True, working_tree=True)
 
-    filename = "{0}/ansible-role-requirements.yml".format(osa_repo_dir)
+    filename = "{0}/{1}".format(osa_repo_dir, role_requirements)
     with open(filename, 'r') as f:
         roles_yaml = yaml.load(f)
 
@@ -595,8 +601,12 @@ def run_osa_differ():
                                         osa_new_commit)
 
     # Get the list of OpenStack roles from the newer and older commits.
-    role_yaml = get_roles(osa_repo_dir, osa_old_commit)
-    role_yaml_latest = get_roles(osa_repo_dir, osa_new_commit)
+    role_yaml = get_roles(osa_repo_dir,
+                          osa_old_commit,
+                          args.role_requirements)
+    role_yaml_latest = get_roles(osa_repo_dir,
+                                 osa_new_commit,
+                                 args.role_requirements)
 
     if not args.skip_roles:
         # Generate the role report.
