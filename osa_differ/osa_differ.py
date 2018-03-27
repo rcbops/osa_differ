@@ -37,8 +37,6 @@ from . import exceptions
 # Configure logging
 log = logging.getLogger()
 log.setLevel(logging.ERROR)
-stdout_handler = logging.StreamHandler(sys.stdout)
-log.addHandler(stdout_handler)
 
 
 def create_parser():
