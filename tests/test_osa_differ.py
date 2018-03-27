@@ -1,6 +1,7 @@
 """Testing osa-differ."""
 import argparse
 import json
+import os
 import subprocess
 
 
@@ -134,6 +135,22 @@ novncproxy_git_project_group: nova_console
         projects = osa_differ.get_projects(path,
                                            'HEAD')
         assert isinstance(projects, list)
+
+    def test_checkout(self, tmpdir):
+        """Test the checkout method."""
+        p = tmpdir.mkdir('test_checkout')
+        path = str(p)
+        repo = Repo.init(path)
+        file = p / "file"
+        file.write_text(u"foo", encoding='utf-8')
+        sfile = str(file)
+        assert os.path.exists(sfile)
+        repo.index.add(["file"])
+        repo.index.commit("Test")
+        sha = repo.head.commit.hexsha
+        os.remove(sfile)
+        osa_differ.checkout(repo, sha)
+        assert os.path.exists(sfile)
 
     def test_get_roles(self, tmpdir):
         """Verify that we can get OSA role information."""

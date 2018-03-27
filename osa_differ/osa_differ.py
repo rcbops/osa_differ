@@ -164,8 +164,7 @@ def get_projects(osa_repo_dir, commit):
     """Get all projects from multiple YAML files."""
     # Check out the correct commit SHA from the repository
     repo = Repo(osa_repo_dir)
-    repo.head.reference = repo.commit(commit)
-    repo.head.reset(index=True, working_tree=True)
+    checkout(repo, commit)
 
     yaml_files = glob.glob(
         '{0}/playbooks/defaults/repo_packages/*.yml'.format(osa_repo_dir)
@@ -180,12 +179,40 @@ def get_projects(osa_repo_dir, commit):
     return normalize_yaml(merged_dicts)
 
 
+def checkout(repo, ref):
+    """Checkout a repoself."""
+    # Delete local branch if it exists, remote branch will be tracked
+    # automatically. This prevents stale local branches from causing problems.
+    # It also avoids problems with appending origin/ to refs as that doesn't
+    # work with tags, SHAs, and upstreams not called origin.
+    if ref in repo.branches:
+        # eg delete master but leave origin/master
+        log.warn("Removing local branch {b} for repo {r}".format(b=ref,
+                                                                 r=repo))
+        # Can't delete currently checked out branch, so make sure head is
+        # detached before deleting.
+
+        repo.head.reset(index=True, working_tree=True)
+        repo.git.checkout(repo.head.commit.hexsha)
+        repo.delete_head(ref)
+
+    log.info("Checkout out repo {repo} to ref {ref}".format(repo=repo,
+                                                            ref=ref))
+    repo.head.reset(index=True, working_tree=True)
+    repo.git.checkout(ref)
+    repo.head.reset(index=True, working_tree=True)
+    sha = repo.head.commit.hexsha
+    log.info("Current SHA for repo {repo} is {sha}".format(repo=repo, sha=sha))
+
+
 def get_roles(osa_repo_dir, commit, role_requirements):
     """Read OSA role information at a particular commit."""
     repo = Repo(osa_repo_dir)
-    repo.head.reference = repo.commit(commit)
-    repo.head.reset(index=True, working_tree=True)
 
+    checkout(repo, commit)
+
+    log.info("Looking for file {f} in repo {r}".format(r=osa_repo_dir,
+                                                       f=role_requirements))
     filename = "{0}/{1}".format(osa_repo_dir, role_requirements)
     with open(filename, 'r') as f:
         roles_yaml = yaml.load(f)
@@ -368,7 +395,6 @@ def repo_pull(repo_dir, repo_url, fetch=False):
                         "+refs/heads/*:refs/remotes/origin/*",
                         "+refs/heads/*:refs/heads/*",
                         "+refs/tags/*:refs/tags/*"])
-        repo.git.reset(["--hard", "FETCH_HEAD"])
     return repo
 
 
@@ -447,7 +473,7 @@ def get_release_notes(osa_repo_dir, osa_old_commit, osa_new_commit):
     # Find the closest tag from a given SHA
     # The tag found here is the tag that was cut
     # either on or before the given SHA
-    repo.head.reference = repo.commit(osa_old_commit)
+    checkout(repo, osa_old_commit)
     old_tag = repo.git.describe()
 
     # If the SHA given is between two release tags, then
@@ -460,7 +486,7 @@ def get_release_notes(osa_repo_dir, osa_old_commit, osa_new_commit):
         old_tag = old_tag[0:old_tag.index('-')]
 
     # Get the nearest tag associated with the new commit
-    repo.head.reference = repo.commit(osa_new_commit)
+    checkout(repo, osa_new_commit)
     new_tag = repo.git.describe()
     if '-' in new_tag:
         nearest_new_tag = new_tag[0:new_tag.index('-')]
