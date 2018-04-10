@@ -194,7 +194,7 @@ def checkout(repo, ref):
 
         repo.head.reset(index=True, working_tree=True)
         repo.git.checkout(repo.head.commit.hexsha)
-        repo.delete_head(ref)
+        repo.delete_head(ref, '--force')
 
     log.info("Checkout out repo {repo} to ref {ref}".format(repo=repo,
                                                             ref=ref))
