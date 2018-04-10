@@ -5,10 +5,10 @@ osa-differ
     :target: https://pypi.python.org/pypi/osa_differ
 .. image:: https://img.shields.io/pypi/pyversions/osa_differ.svg
     :target: https://pypi.python.org/pypi/osa_differ
-.. image:: https://travis-ci.org/major/osa_differ.svg?branch=master
-    :target: https://travis-ci.org/major/osa_differ
-.. image:: https://img.shields.io/codecov/c/github/major/osa_differ/master.svg
-    :target: https://codecov.io/gh/major/osa_differ
+.. image:: https://travis-ci.org/rcbops/osa_differ.svg?branch=master
+    :target: https://travis-ci.org/rcbops/osa_differ
+.. image:: https://img.shields.io/codecov/c/github/rcbops/osa_differ/master.svg
+    :target: https://codecov.io/gh/rcbops/osa_differ
 
 Find changes between OpenStack-Ansible releases.
 
@@ -47,7 +47,7 @@ To get the latest development version, install via the git repository:
 
 .. code-block:: console
 
-   pip install git+https://github.com/major/osa_differ
+   pip install git+https://github.com/rcbops/osa_differ
 
 Usage
 -----
