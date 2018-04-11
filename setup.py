@@ -33,7 +33,7 @@ if sys.version_info < (2, 7):
 
 setup(
     name='osa_differ',
-    version='0.3.7',
+    version='0.3.8',
     author='Major Hayden',
     author_email='major@mhtx.net',
     description="Find changes between OpenStack-Ansible versions",
