@@ -97,6 +97,12 @@ commits in OpenStack-Ansible.
         default=False,
         help="Fetch latest changes to repo",
     )
+    parser.add_argument(
+        '--osa-repo-url',
+        action='store',
+        default='https://git.openstack.org/openstack/openstack-ansible',
+        help="URL of the openstack-ansible git repo",
+    )
     display_opts = parser.add_argument_group("Limit scope")
     display_opts.add_argument(
         "--skip-projects",
@@ -223,8 +229,7 @@ def get_roles(osa_repo_dir, commit, role_requirements):
 def make_osa_report(repo_dir, old_commit, new_commit,
                     args):
     """Create initial RST report header for OpenStack-Ansible."""
-    osa_repo_url = "https://git.openstack.org/openstack/openstack-ansible"
-    update_repo(repo_dir, osa_repo_url, args.update)
+    update_repo(repo_dir, args.osa_repo_url, args.update)
 
     # Are these commits valid?
     validate_commits(repo_dir, [old_commit, new_commit])
@@ -240,7 +245,7 @@ def make_osa_report(repo_dir, old_commit, new_commit,
         'args': args,
         'repo': 'openstack-ansible',
         'commits': commits,
-        'commit_base_url': get_commit_url(osa_repo_url),
+        'commit_base_url': get_commit_url(args.osa_repo_url),
         'old_sha': old_commit,
         'new_sha': new_commit
     }
