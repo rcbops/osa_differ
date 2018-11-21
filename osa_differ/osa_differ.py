@@ -568,7 +568,7 @@ def get_release_notes(osa_repo_dir, osa_old_commit, osa_new_commit):
     release_notes = re.sub('===+', _equal_to_tilde, release_notes)
     # Replace headers that contain '-' with '#' to comply with osa-differ's
     # formatting
-    release_notes = re.sub('\---+', _dash_to_num, release_notes)
+    release_notes = re.sub('---+', _dash_to_num, release_notes)
     return release_notes
 
 
