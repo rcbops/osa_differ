@@ -40,7 +40,7 @@ setup(
     install_requires=required_packages,
     packages=['osa_differ'],
     include_package_data=True,
-    url='https://github.com/rcbops/osa-differ',
+    url='https://github.com/rcbops/osa_differ',
     entry_points='''
         [console_scripts]
         osa-differ = osa_differ.osa_differ:run_osa_differ
