@@ -40,6 +40,15 @@ class TestOSADiffer(object):
         result = osa_differ.parse_arguments()
         assert result['test'] == 'test'
 
+    def test_arguments_version_mappings(self, monkeypatch):
+        """Test if we can parse version mapping arguments."""
+        parser = osa_differ.create_parser()
+        args = vars(parser.parse_args(
+            ['13.3.0', '13.3.1', '--version-mappings', 'foo;1.0.0:v1.0.0']))
+        assert args['old_commit'][0] == '13.3.0'
+        assert args['new_commit'][0] == '13.3.1'
+        assert args['version_mappings'] == {'foo': {'1.0.0': 'v1.0.0'}}
+
     def test_create_parser(self):
         """Verify that we can create an argument parser."""
         parser = osa_differ.create_parser()
@@ -300,6 +309,29 @@ novncproxy_git_project_group: nova_console
         old_pins = [("test", "http://example.com", "HEAD~1")]
 
         report = osa_differ.make_report(str(tmpdir), old_pins, new_pins)
+
+        assert "1 commit was found in `test <http://example.com>`" in report
+        assert "Testing 2" in report
+
+    def test_make_report_with_version_mappings(self, tmpdir):
+        """Verify that we can make a report."""
+        p = tmpdir.mkdir('test')
+        path = str(p)
+        repo = Repo.init(path)
+        file = p / 'test.txt'
+        file.write_text(u'Testing1', encoding='utf-8')
+        repo.index.add(['test.txt'])
+        repo.index.commit('Testing 1')
+        file.write_text(u'Testing2', encoding='utf-8')
+        repo.index.add(['test.txt'])
+        repo.index.commit('Testing 2')
+
+        new_pins = [("test", "http://example.com", "HEAD")]
+        old_pins = [("test", "http://example.com", "some-non-existent-tag")]
+
+        version_mappings = {"test": {"some-non-existent-tag": "HEAD~1"}}
+        report = osa_differ.make_report(str(tmpdir), old_pins, new_pins,
+                                        version_mappings=version_mappings)
 
         assert "1 commit was found in `test <http://example.com>`" in report
         assert "Testing 2" in report

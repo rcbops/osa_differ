@@ -21,6 +21,7 @@ import os
 import re
 import subprocess
 import sys
+from collections import defaultdict
 from distutils.version import LooseVersion
 
 from git import Repo
@@ -37,6 +38,30 @@ from . import exceptions
 # Configure logging
 log = logging.getLogger()
 log.setLevel(logging.ERROR)
+
+
+class VersionMappingsAction(argparse.Action):
+    """Process version-mapping argparse arguments."""
+
+    def __init__(self, option_strings, dest, **kwargs):
+        """Initialise instance."""
+        superclass = super(VersionMappingsAction, self)
+        superclass.__init__(option_strings, dest, **kwargs)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        """Process version-mapping string."""
+        version_mappings = getattr(namespace, "version_mappings",
+                                   defaultdict(dict))
+        if not isinstance(version_mappings, defaultdict):
+            version_mappings = defaultdict(dict)
+        repo_name, version_mapping = values.split(";", 1)
+        versions = {
+            old: new
+            for old_new in version_mapping.split(";")
+            for old, new in [old_new.split(":")]
+        }
+        version_mappings[repo_name].update(versions)
+        setattr(namespace, self.dest, version_mappings)
 
 
 def create_parser():
@@ -102,6 +127,15 @@ commits in OpenStack-Ansible.
         action='store',
         default='https://git.openstack.org/openstack/openstack-ansible',
         help="URL of the openstack-ansible git repo",
+    )
+    parser.add_argument(
+        '--version-mappings',
+        action=VersionMappingsAction,
+        help=(
+            "Map dependency versions in cases where the old version no longer "
+            "exists. The argument should be of the form "
+            "'repo-name;old-version1:new-version1;old-version2:new-version2'."
+        ),
     )
     display_opts = parser.add_argument_group("Limit scope")
     display_opts.add_argument(
@@ -252,11 +286,15 @@ def make_osa_report(repo_dir, old_commit, new_commit,
     return render_template('offline-header.j2', template_vars)
 
 
-def make_report(storage_directory, old_pins, new_pins, do_update=False):
+def make_report(storage_directory, old_pins, new_pins, do_update=False,
+                version_mappings=None):
     """Create RST report from a list of projects/roles."""
     report = ""
+    version_mappings = version_mappings or {}
     for new_pin in new_pins:
         repo_name, repo_url, commit_sha = new_pin
+        commit_sha = version_mappings.get(repo_name, {}
+                                          ).get(commit_sha, commit_sha)
 
         # Prepare our repo directory and clone the repo if needed. Only pull
         # if the user requests it.
@@ -270,6 +308,10 @@ def make_report(storage_directory, old_pins, new_pins, do_update=False):
             commit_sha_old = next(x[2] for x in old_pins if x[0] == repo_name)
         except Exception:
             continue
+        else:
+            commit_sha_old = version_mappings.get(repo_name, {}
+                                                  ).get(commit_sha_old,
+                                                        commit_sha_old)
 
         # Loop through the commits and render our template.
         validate_commits(repo_dir, [commit_sha_old, commit_sha])
@@ -568,7 +610,7 @@ def get_release_notes(osa_repo_dir, osa_old_commit, osa_new_commit):
     release_notes = re.sub('===+', _equal_to_tilde, release_notes)
     # Replace headers that contain '-' with '#' to comply with osa-differ's
     # formatting
-    release_notes = re.sub('\---+', _dash_to_num, release_notes)
+    release_notes = re.sub('---+', _dash_to_num, release_notes)
     return release_notes
 
 
@@ -655,7 +697,8 @@ def run_osa_differ():
         report_rst += make_report(storage_directory,
                                   role_yaml,
                                   role_yaml_latest,
-                                  args.update)
+                                  args.update,
+                                  args.version_mappings)
 
     if not args.skip_projects:
         # Get the list of OpenStack projects from newer commit and older
